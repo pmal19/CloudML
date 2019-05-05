@@ -54,6 +54,7 @@ class sstNet(nn.Module):
         emb = self.encoderSst(s)
         return emb
 
+
 class BiLSTMSentiment(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, vocab_size, label_size, use_gpu, batch_size, dropout=0.5):
         super(BiLSTMSentiment, self).__init__()
@@ -79,6 +80,7 @@ class BiLSTMSentiment(nn.Module):
         y = self.hidden2label(lstm_out[-1])
         log_probs = F.log_softmax(y)
         return log_probs
+
 
 class sstDataset(Dataset):
     def __init__(self, sstPath, glovePath, transform = None):
@@ -113,6 +115,7 @@ class sstDataset(Dataset):
                 vector = np.concatenate((vector, [0]*len(self.vocab['a'])), axis=0)
         return vector
 
+
 class Partition(Dataset):
     def __init__(self, data, index):
         self.data = data
@@ -144,6 +147,7 @@ class DataPartitioner(Dataset):
     def use(self, partition):
         return Partition(self.data, self.partitions[partition])
 
+
 def partition_dataset(sstPath, glovePath, batchSize, transformations=None):
     dataset = sstDataset(sstPath, glovePath, transformations)
     size = dist.get_world_size()
@@ -154,11 +158,13 @@ def partition_dataset(sstPath, glovePath, batchSize, transformations=None):
     train_set = DataLoader(partition, batch_size=bsz, shuffle=True, num_workers=1)
     return train_set, bsz
 
+
 def average_gradients(model):
     size = float(dist.get_world_size())
     for param in model.parameters():
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
         param.grad.data /= size
+
 
 def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda):    
     torch.manual_seed(1234)
@@ -192,7 +198,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 
             if batch_idx == break_val:
                 return
-            if batch_idx % 100 == 0:
+            if batch_idx % 1000 == 0:
                 dev_loss = 0
                 n_correct = 0
                 n_total = 0
@@ -216,15 +222,15 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
                     epoch, batch_idx * len(data), len(trainLoader.dataset),
                     100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
 
-            numberOfSamples += data.size()[0]
-            data, target = Variable(data), Variable(target)
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            epoch_loss += loss.item()
-            loss.backward()
-            average_gradients(model)
-            optimizer.step()
+            # numberOfSamples += data.size()[0]
+            # data, target = Variable(data), Variable(target)
+            # optimizer.zero_grad()
+            # output = model(data)
+            # loss = criterion(output, target)
+            # epoch_loss += loss.item()
+            # loss.backward()
+            # average_gradients(model)
+            # optimizer.step()
 
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
         print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
@@ -242,10 +248,6 @@ def main(rank, wsize):
 	epochs = 2
 	learningRate = 0.01
 	momentum = 0.9
-	i1 = 3072
-	o1 = 1024
-	o2 = 256
-	o3 = 17
 	numWorkers = 1
 
 	net = Net(i1, o1, o2, o3)
