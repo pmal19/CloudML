@@ -68,11 +68,9 @@ class BiLSTMSentiment(nn.Module):
 
     def init_hidden(self):
         if self.use_gpu:
-            return (Variable(torch.zeros(2, self.batch_size, self.hidden_dim).cuda()),
-                    Variable(torch.zeros(2, self.batch_size, self.hidden_dim).cuda()))
+            return (Variable(torch.zeros(2, self.batch_size, self.hidden_dim).cuda()), Variable(torch.zeros(2, self.batch_size, self.hidden_dim).cuda()))
         else:
-            return (Variable(torch.zeros(2, self.batch_size, self.hidden_dim)),
-                    Variable(torch.zeros(2, self.batch_size, self.hidden_dim)))
+            return (Variable(torch.zeros(2, self.batch_size, self.hidden_dim)), Variable(torch.zeros(2, self.batch_size, self.hidden_dim)))
 
     def forward(self, sentence):
         x = sentence.view(len(sentence), self.batch_size, -1)
@@ -197,7 +195,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
             optimizer.step()
 
             if batch_idx == break_val:
-                return
+                break
             if batch_idx % 1000 == 0:
                 dev_loss = 0
                 n_correct = 0
@@ -218,9 +216,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
                     n_total += devbatchSize
                 dev_acc = (100. * n_correct.data[0])/n_total
 
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(trainLoader.dataset),
-                    100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
 
             # numberOfSamples += data.size()[0]
             # data, target = Variable(data), Variable(target)
@@ -256,19 +252,19 @@ def main(rank, wsize):
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
 	trainData = "../Data/SST/trees/train.txt"
-        devData = "../Data/SST/trees/dev.txt"
+	devData = "../Data/SST/trees/dev.txt"
 	testData = "../Data/SST/trees/test.txt"
 
 	# transformations = transforms.Compose([transforms.Resize((32,32)),transforms.ToTensor()])
 
 	trainLoader, bszTrain = partition_dataset(trainData, glovePath, batchSize)
-        devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
+	devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
 	testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 
 	weighted_loss, numberOfSamples, average_time = run(rank, wsize, net, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
 
 	if rank == 0:
-        	print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
+		print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
 		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
