@@ -1,0 +1,31 @@
+Job started
+Traceback (most recent call last):
+  File "dist1.py", line 280, in <module>
+    dist.init_process_group(backend="mpi")#, world_size=int(sys.argv[1]))
+  File "/home/pm2758/pytorch_env/py3.6.3/lib/python3.6/site-packages/torch/distributed/__init__.py", line 94, in init_process_group
+    group_name, rank)
+RuntimeError: the MPI backend is not available; try to recompile the THD package with MPI support at /pytorch/torch/lib/THD/process_group/General.cpp:17
+Traceback (most recent call last):
+  File "dist1.py", line 280, in <module>
+    dist.init_process_group(backend="mpi")#, world_size=int(sys.argv[1]))
+  File "/home/pm2758/pytorch_env/py3.6.3/lib/python3.6/site-packages/torch/distributed/__init__.py", line 94, in init_process_group
+    group_name, rank)
+RuntimeError: the MPI backend is not available; try to recompile the THD package with MPI support at /pytorch/torch/lib/THD/process_group/General.cpp:17
+Traceback (most recent call last):
+  File "dist1.py", line 280, in <module>
+    dist.init_process_group(backend="mpi")#, world_size=int(sys.argv[1]))
+  File "/home/pm2758/pytorch_env/py3.6.3/lib/python3.6/site-packages/torch/distributed/__init__.py", line 94, in init_process_group
+    group_name, rank)
+RuntimeError: the MPI backend is not available; try to recompile the THD package with MPI support at /pytorch/torch/lib/THD/process_group/General.cpp:17
+-------------------------------------------------------
+Primary job  terminated normally, but 1 process returned
+a non-zero exit code.. Per user-direction, the job has been aborted.
+-------------------------------------------------------
+--------------------------------------------------------------------------
+mpirun detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
+
+  Process name: [[55863,1],0]
+  Exit code:    1
+--------------------------------------------------------------------------
+Job completed

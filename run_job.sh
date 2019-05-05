@@ -28,8 +28,9 @@ module load openmpi/intel/2.0.1
 # conda activate base
 module load python3/intel/3.6.3 cuda/9.0.176 nccl/cuda9.0/2.4.2
 
-source ~/pytorch_env/py3.6.3/bin/activate
+#source ~/pytorch_env/py3.6.3/bin/activate
 
-mpirun -np 3 python dist1.py
+#mpiexec -n 3 python dist1.py
+mpirun -n 3 python dist1.py
 
 echo "Job completed"
