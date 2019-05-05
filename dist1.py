@@ -256,19 +256,19 @@ def main(rank, wsize):
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
 	trainData = "../Data/SST/trees/train.txt"
-    devData = "../Data/SST/trees/dev.txt"
+        devData = "../Data/SST/trees/dev.txt"
 	testData = "../Data/SST/trees/test.txt"
 
 	# transformations = transforms.Compose([transforms.Resize((32,32)),transforms.ToTensor()])
 
 	trainLoader, bszTrain = partition_dataset(trainData, glovePath, batchSize)
-    devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
+        devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
 	testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 
 	weighted_loss, numberOfSamples, average_time = run(rank, wsize, net, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
 
 	if rank == 0:
-        print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
+        	print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
 		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
