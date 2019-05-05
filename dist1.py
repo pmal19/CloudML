@@ -246,9 +246,17 @@ def main(rank, wsize):
 	learningRate = 0.01
 	momentum = 0.9
 	numWorkers = 1
+    use_cuda = torch.cuda.is_available()
 
-	net = Net(i1, o1, o2, o3)
+	# model = Net(i1, o1, o2, o3)
+    model = BiLSTMSentiment(100, 100, 100, 5, use_cuda, batchSize) 
 	criterion = nn.CrossEntropyLoss()
+    if(use_cuda):
+        model.cuda()
+    if(use_cuda):
+        criterion = nn.CrossEntropyLoss().cuda()
+    else:
+        criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(net.parameters(), lr = learningRate, momentum = momentum)
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
@@ -261,6 +269,7 @@ def main(rank, wsize):
 	trainLoader, bszTrain = partition_dataset(trainData, glovePath, batchSize)
 	devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
 	testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
+    print('Rank {} - Data loaded'.format(rank))
 
 	weighted_loss, numberOfSamples, average_time = run(rank, wsize, net, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
 

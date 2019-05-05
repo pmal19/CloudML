@@ -23,7 +23,7 @@ echo "Job started"
 # $BIN_PATH/mpirun -n $(($R-1)) $BIN_PATH/python ./lab3c3.py
 # $BIN_PATH/mpirun -n $R $BIN_PATH/python ./lab3c4.py
 
-module load openmpi/intel/2.0.1
+# module load openmpi/intel/2.0.1
 # module load pytorch/python2.7/0.3.0_4
 # module load pytorch/python3.6/0.3.0_4
 
