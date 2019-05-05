@@ -278,6 +278,7 @@ if __name__ == "__main__":
     #    sys.exit(1)
     
     dist.init_process_group(backend="mpi")#, world_size=int(sys.argv[1]))
+    # dist.init_process_group(backend="tcp")#, world_size=int(sys.argv[1]))
     rank = dist.get_rank()
     wsize = dist.get_world_size()
 
