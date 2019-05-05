@@ -33,8 +33,8 @@ module load openmpi/intel/2.0.1
 #source ~/pytorch_env/py3.6.3/bin/activate
 
 #mpiexec -n 3 python dist1.py
-# mpirun -n 3 python dist1.py
+mpirun -n 3 python dist1.py
 
-$BIN_PATH/mpirun -n 3 $BIN_PATH/python ./dist1.py
+# $BIN_PATH/mpirun -n 3 $BIN_PATH/python ./dist1.py
 
 echo "Job completed"
