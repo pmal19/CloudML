@@ -2,28 +2,14 @@
 
 #SBATCH --verbose
 #SBATCH --job-name=dist
-#SBATCH --mem=100GB
+#SBATCH --mem=10GB
 #SBATCH --output=out.dist.%j
 
-##SBATCH --time=100:00:00
-##SBATCH--gres=gpu:1
-
-#SBATCH --mem=250GB
 #SBATCH --nodes=3
-#SBATCH --cpus-per-task=28
-##SBATCH --exclusive
-##SBATCH --time=00:60:00
-##SBATCH --gres=gpu:k80:4
-##SBATCH --gres=gpu:p40:4
-##SBATCH --reservation=chung
+#SBATCH --cpus-per-task=1
 
-
-##SBATCH --nodes=$R
 #SBATCH --ntasks-per-node=1
-##SBATCH --cpus-per-task=1
-##SBATCH --partition=c32_41
-##SBATCH --output=out-$R.%j
-##SBATCH --mem=10GB
+
 
 echo "Job started"
 
