@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from PIL import Image
+import torch.distributed as dist
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 import numpy as np
