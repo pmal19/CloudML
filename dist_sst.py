@@ -195,8 +195,6 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 			average_gradients(model)
 			optimizer.step()
 
-			if batch_idx == break_val:
-				break
 			if batch_idx % 1000 == 0:
 				dev_loss = 0
 				n_correct = 0
@@ -248,7 +246,6 @@ def main(rank, wsize):
 	numWorkers = 1
 	use_cuda = torch.cuda.is_available()
 
-	# model = Net(i1, o1, o2, o3)
 	model = BiLSTMSentiment(100, 100, 100, 5, use_cuda, batchSize) 
 	criterion = nn.CrossEntropyLoss()
 	if(use_cuda):
@@ -257,7 +254,7 @@ def main(rank, wsize):
 		criterion = nn.CrossEntropyLoss().cuda()
 	else:
 		criterion = nn.CrossEntropyLoss()
-	optimizer = optim.SGD(net.parameters(), lr = learningRate, momentum = momentum)
+	optimizer = optim.SGD(model.parameters(), lr = learningRate, momentum = momentum)
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
 	trainData = "../Data/SST/trees/train.txt"
@@ -268,7 +265,7 @@ def main(rank, wsize):
 
 	trainLoader, bszTrain = partition_dataset(trainData, glovePath, batchSize)
 	devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
-	testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
+	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 	print('Rank {} - Data loaded'.format(rank))
 
 	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
