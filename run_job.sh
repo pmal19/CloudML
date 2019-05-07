@@ -12,10 +12,12 @@
 echo "Job started"
 
 module purge
-module load pytorch/python2.7/0.3.0_4
-module load openmpi/intel/2.0.1
+# module load pytorch/python2.7/0.3.0_4
+# module load openmpi/intel/2.0.1
 
-mpiexec -n 3 python dist_sst.py
+# mpiexec -n 3 python dist_sst.py
 # mpirun -n 3 python dist_sst.py
+
+mpirun -n 4 python myscript.py
 
 echo "Job completed"
