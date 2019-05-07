@@ -5,7 +5,7 @@
 #SBATCH --mem=10GB
 #SBATCH --output=out.dist.%j
 
-#SBATCH --nodes=3
+#SBATCH --nodes=4
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks-per-node=4
 
