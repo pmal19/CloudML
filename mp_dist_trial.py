@@ -191,7 +191,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 					dev_loss += criterion(dev_output, dev_target)
 					n_correct += (torch.max(dev_output, 1)[1].view(dev_target.size()) == dev_target).sum()
 					n_total += devbatchSize
-				dev_acc = (100. * n_correct.data[0])/n_total
+				dev_acc = (100. * n_correct.data)/n_total
 
 				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
 
@@ -211,9 +211,9 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
 	numberOfSamples = torch.Tensor([numberOfSamples])
-	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM, group=0)
-	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM, group=0)
-	dist.all_reduce(average_time, op=dist.reduce_op.SUM, group=0)
+	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM)
+	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM)
+	dist.all_reduce(average_time, op=dist.reduce_op.SUM)
 	return weighted_loss, numberOfSamples, average_time
 
 
