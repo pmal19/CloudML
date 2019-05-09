@@ -193,7 +193,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 					n_total += devbatchSize
 				dev_acc = (100. * n_correct.data)/n_total
 
-				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
+				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
 
 			# numberOfSamples += data.size()[0]
 			# data, target = Variable(data), Variable(target)
