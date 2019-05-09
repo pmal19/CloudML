@@ -1,0 +1,19 @@
+Job started
+mp rank -  2
+SST eval mode: Preserving only top node label.
+SST eval mode: Preserving only top node label.
+Rank 2 - Data loaded of len 134
+mp rank -  3
+SST eval mode: Preserving only top node label.
+SST eval mode: Preserving only top node label.
+Rank 3 - Data loaded of len 134
+mp rank -  1
+SST eval mode: Preserving only top node label.
+SST eval mode: Preserving only top node label.
+Rank 1 - Data loaded of len 134
+mp rank -  0
+SST eval mode: Preserving only top node label.
+SST eval mode: Preserving only top node label.
+Rank 0 - Data loaded of len 134
+rank 0 exiting
+Job completed

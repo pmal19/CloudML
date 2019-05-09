@@ -273,7 +273,7 @@ def setupAndCall(rank, world_size):
 	setup(rank, world_size)
 	print("mp rank - ", rank)
 	hostname = socket.gethostname()
-	runDistCollectives(rank, world_size, hostname)
+	# runDistCollectives(rank, world_size, hostname)
 	main(rank, world_size)
 	cleanup()
 	
