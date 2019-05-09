@@ -2,8 +2,10 @@
 
 #SBATCH --verbose
 #SBATCH --job-name=dist
-#SBATCH --mem=10GB
+#SBATCH --mem=100GB
 #SBATCH --output=out.dist.%j
+#SBATCH --error=err.dist.%j
+#SBATCH --time=100:00:00
 
 #SBATCH --nodes=4
 #SBATCH --cpus-per-task=4
@@ -11,13 +13,20 @@
 
 echo "Job started"
 
+. /scratch/pm2758/anaconda3/etc/profile.d/conda.sh
+
+conda activate pytorch_v1
+
 module purge
-# module load pytorch/python2.7/0.3.0_4
-# module load openmpi/intel/2.0.1
+module load gcc/6.3.0
+module load openmpi/intel/3.1.3
+module load cuda/9.0.176
+module load nccl/cuda9.0/2.4.2
+module load ninja/intel/1.8.2
 
 # mpiexec -n 3 python dist_sst.py
 # mpirun -n 3 python dist_sst.py
 
-mpirun -n 4 python myscript.py
+python mp_dist_trial.py
 
 echo "Job completed"
