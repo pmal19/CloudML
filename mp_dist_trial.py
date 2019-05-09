@@ -143,7 +143,7 @@ def average_gradients(model):
 		param.grad.data /= size
   
 
-def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda):    
+def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):    
 	torch.manual_seed(1234)
 	epoch_loss = 0.0
 	numberOfSamples = 0
@@ -247,7 +247,7 @@ def main(rank, wsize):
 	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 	print('Rank {} - Data loaded of len {}'.format(rank, len(trainLoader)))
 
-	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
+	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
 
 	if rank == 0:
 		print("rank 0 exiting")
