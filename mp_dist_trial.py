@@ -139,7 +139,7 @@ def partition_dataset(sstPath, glovePath, batchSize, transformations=None):
 def average_gradients(model):
 	size = float(dist.get_world_size())
 	for param in model.parameters():
-		dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+		dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
 		param.grad.data /= size
   
 
