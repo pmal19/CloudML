@@ -4,6 +4,7 @@ import sys
 import pdb
 import time
 import socket
+import random
 import tempfile
 import numpy as np
 import pandas as pd
@@ -76,7 +77,7 @@ class sstDataset(Dataset):
 
 	def maxlength(self, data):
 		maxSentenceLength = max([len(d['sentence_1'].split()) for d in data])
-		print("Max sentence length - ", maxSentenceLength)
+		# print("Max sentence length - ", maxSentenceLength)
 		return maxSentenceLength
 
 	def pad(self, sentence):
@@ -109,11 +110,10 @@ class DataPartitioner(Dataset):
 	def __init__(self, data, sizes, seed=1234):
 		self.data = data
 		self.partitions = []
-		rng = Random()
-		rng.seed(seed)
+		random.seed(seed)
 		data_len = len(data)
 		indexes = [x for x in range(0, data_len)]
-		rng.shuffle(indexes)
+		random.shuffle(indexes)
 
 		for frac in sizes:
 			part_len = int(frac * data_len)
