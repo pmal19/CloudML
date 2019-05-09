@@ -246,12 +246,12 @@ def main(rank, wsize):
 	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 	print('Rank {} - Data loaded of len {}'.format(rank, len(trainLoader)))
 
-	# weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
+	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
 
 	if rank == 0:
 		print("rank 0 exiting")
-		# print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
-		# print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
+		print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
+		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
 
