@@ -3,6 +3,7 @@ import os
 import sys
 import pdb
 import time
+import math
 import socket
 import random
 import tempfile
@@ -146,7 +147,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 	torch.manual_seed(1234)
 	epoch_loss = 0.0
 	numberOfSamples = 0
-	num_batches = ceil(len(trainLoader.dataset) / float(bsz))
+	num_batches = math.ceil(len(trainLoader.dataset) / float(bsz))
 	start_time = time.monotonic()
 	for epoch in range(epochs):
 		epoch_loss = 0.0
