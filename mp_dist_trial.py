@@ -173,7 +173,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 			average_gradients(model)
 			optimizer.step()
 
-			if batch_idx % 1000 == 0:
+			if batch_idx % 100 == 0:
 				dev_loss = 0
 				n_correct = 0
 				n_total = 0
