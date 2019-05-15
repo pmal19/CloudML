@@ -242,7 +242,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 
 def main(rank, wsize):
 	batchSize = 16
-	epochs = 2
+	epochs = 10
 	learningRate = 0.01
 	momentum = 0.9
 	numWorkers = 1
