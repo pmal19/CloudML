@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "mp_dist_synch.py", line 314, in <module>
+    run_demo(setupAndCall, world_size)
+  File "mp_dist_synch.py", line 308, in run_demo
+    join=True)
+  File "/scratch/pm2758/anaconda3/envs/pytorch_v1/lib/python3.7/site-packages/torch/multiprocessing/spawn.py", line 151, in spawn
+    for i in range(nprocs):
+TypeError: 'str' object cannot be interpreted as an integer

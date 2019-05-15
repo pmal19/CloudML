@@ -1,0 +1,8 @@
+Job started
+mp rank -  1
+I am 1 of 2 in c20-01
+Rank  1  has data  tensor(1.)
+mp rank -  0
+I am 0 of 2 in c20-01
+Rank  0  has data  tensor(1.)
+Job completed

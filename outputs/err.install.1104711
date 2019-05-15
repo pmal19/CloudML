@@ -1,0 +1,252 @@
+-- git Version: v1.4.0-505be96a
+-- Version: 1.4.0
+-- Performing Test HAVE_STD_REGEX
+-- Performing Test HAVE_STD_REGEX
+-- Performing Test HAVE_STD_REGEX -- success
+-- Performing Test HAVE_GNU_POSIX_REGEX
+-- Performing Test HAVE_GNU_POSIX_REGEX
+-- Performing Test HAVE_GNU_POSIX_REGEX -- failed to compile
+-- Performing Test HAVE_POSIX_REGEX
+-- Performing Test HAVE_POSIX_REGEX
+-- Performing Test HAVE_POSIX_REGEX -- success
+-- Performing Test HAVE_STEADY_CLOCK
+-- Performing Test HAVE_STEADY_CLOCK
+-- Performing Test HAVE_STEADY_CLOCK -- success
+CMake Warning (dev) at build/third_party/fbgemm/third_party/asmjit/CMakeLists.txt:34 (set):
+  implicitly converting 'BOOLEAN' to 'STRING' type.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at build/third_party/fbgemm/third_party/asmjit/CMakeLists.txt:35 (set):
+  implicitly converting 'BOOLEAN' to 'STRING' type.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at build/third_party/fbgemm/third_party/asmjit/CMakeLists.txt:36 (set):
+  implicitly converting 'BOOLEAN' to 'STRING' type.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at build/third_party/fbgemm/third_party/asmjit/CMakeLists.txt:37 (set):
+  implicitly converting 'BOOLEAN' to 'STRING' type.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at build/third_party/fbgemm/third_party/asmjit/CMakeLists.txt:38 (set):
+  implicitly converting 'BOOLEAN' to 'STRING' type.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+-- [asmjit]
+   BuildMode=Static
+   BuildTest=Off
+   ASMJIT_DIR=/scratch/pm2758/pytorch/build/third_party/fbgemm/third_party/asmjit
+   ASMJIT_DEPS=pthread;rt
+   ASMJIT_LIBS=asmjit;pthread;rt
+   ASMJIT_CFLAGS=-DASMJIT_STATIC
+   ASMJIT_SOURCE_DIR=/scratch/pm2758/pytorch/build/third_party/fbgemm/third_party/asmjit/src
+   ASMJIT_INCLUDE_DIR=/scratch/pm2758/pytorch/build/third_party/fbgemm/third_party/asmjit/src
+   ASMJIT_PRIVATE_CFLAGS=
+     -DASMJIT_STATIC
+     -std=c++17
+     -fno-tree-vectorize
+     -fvisibility=hidden
+     -O2 [RELEASE]
+     -fno-keep-static-consts [RELEASE]
+     -fmerge-all-constants [RELEASE]
+CMake Warning at cmake/Dependencies.cmake:487 (message):
+  Not compiling with NUMA.  Suppress this warning with -DUSE_NUMA=OFF
+Call Stack (most recent call first):
+  CMakeLists.txt:236 (include)
+
+
+Python 2.7.16 :: Anaconda, Inc.
+[c41-02:02575] mca_base_component_repository_open: unable to open mca_fcoll_dynamic: /scratch/pm2758/anaconda3/envs/sst/lib/openmpi/mca_fcoll_dynamic.so: undefined symbol: mca_common_ompio_full_print_queue (ignored)
+[c41-02:02575] mca_base_component_repository_open: unable to open mca_fcoll_dynamic_gen2: /scratch/pm2758/anaconda3/envs/sst/lib/openmpi/mca_fcoll_dynamic_gen2.so: undefined symbol: mca_common_ompio_full_print_queue (ignored)
+[c41-02:02575] mca_base_component_repository_open: unable to open mca_fcoll_individual: /scratch/pm2758/anaconda3/envs/sst/lib/openmpi/mca_fcoll_individual.so: undefined symbol: mca_common_ompio_file_read (ignored)
+[c41-02:02575] mca_base_component_repository_open: unable to open mca_fcoll_two_phase: /scratch/pm2758/anaconda3/envs/sst/lib/openmpi/mca_fcoll_two_phase.so: undefined symbol: mca_common_ompio_full_print_queue (ignored)
+[c41-02:02575] mca_base_component_repository_open: unable to open mca_fcoll_static: /scratch/pm2758/anaconda3/envs/sst/lib/openmpi/mca_fcoll_static.so: undefined symbol: mca_common_ompio_full_print_queue (ignored)
+CMake Warning at cmake/Dependencies.cmake:709 (message):
+  OpenMPI found, but it is not built with CUDA support.
+Call Stack (most recent call first):
+  CMakeLists.txt:236 (include)
+
+
+CMake Warning (dev) at cmake/public/cuda.cmake:19 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  Environment variable CUDA_ROOT is set to:
+
+    /share/apps/cuda/10.1.105
+
+  For compatibility, CMake is ignoring the variable.
+Call Stack (most recent call first):
+  cmake/Dependencies.cmake:779 (include)
+  CMakeLists.txt:236 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning at cmake/public/cuda.cmake:110 (message):
+  Caffe2: Cannot find cuDNN library.  Turning the option off
+Call Stack (most recent call first):
+  cmake/Dependencies.cmake:779 (include)
+  CMakeLists.txt:236 (include)
+
+
+CMake Warning (dev) at third_party/gloo/CMakeLists.txt:21 (option):
+  Policy CMP0077 is not set: option() honors normal variables.  Run "cmake
+  --help-policy CMP0077" for policy details.  Use the cmake_policy command to
+  set the policy and suppress this warning.
+
+  For compatibility with older versions of CMake, option is clearing the
+  normal variable 'BUILD_BENCHMARK'.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at third_party/gloo/cmake/Cuda.cmake:133 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  Environment variable CUDA_ROOT is set to:
+
+    /share/apps/cuda/10.1.105
+
+  For compatibility, CMake is ignoring the variable.
+Call Stack (most recent call first):
+  third_party/gloo/cmake/Dependencies.cmake:44 (include)
+  third_party/gloo/CMakeLists.txt:52 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning at cmake/Dependencies.cmake:981 (message):
+  Metal is only used in ios builds.
+Call Stack (most recent call first):
+  CMakeLists.txt:236 (include)
+
+
+disabling ROCM because NOT USE_ROCM is set
+   Target system: Linux-3.10.0-514.10.2.el7.x86_64
+   Target processor: x86_64
+   Host system: Linux-3.10.0-514.10.2.el7.x86_64
+   Host processor: x86_64
+   Detected C compiler: GNU @ /share/apps/gcc/6.3.0/bin/gcc
+CMake Warning (dev) at torch/lib/THD/CMakeLists.txt:50 (FIND_PACKAGE):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  Environment variable CUDA_ROOT is set to:
+
+    /share/apps/cuda/10.1.105
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning (dev) at torch/lib/c10d/CMakeLists.txt:10 (find_package):
+  Policy CMP0074 is not set: find_package uses <PackageName>_ROOT variables.
+  Run "cmake --help-policy CMP0074" for policy details.  Use the cmake_policy
+  command to set the policy and suppress this warning.
+
+  Environment variable CUDA_ROOT is set to:
+
+    /share/apps/cuda/10.1.105
+
+  For compatibility, CMake is ignoring the variable.
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Warning at CMakeLists.txt:435 (message):
+  Generated cmake files are only fully tested if one builds with system glog,
+  gflags, and protobuf.  Other settings may generate files that are not well
+  tested.
+
+
+CMake Warning at caffe2/CMakeLists.txt:215 (add_library):
+  Cannot generate a safe runtime search path for target caffe2 because files
+  in some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at torch/CMakeLists.txt:279 (add_library):
+  Cannot generate a safe runtime search path for target torch because files
+  in some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at torch/CMakeLists.txt:727 (add_library):
+  Cannot generate a safe runtime search path for target torch_python because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at test/cpp/jit/CMakeLists.txt:3 (add_executable):
+  Cannot generate a safe runtime search path for target test_jit because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at test/cpp/api/CMakeLists.txt:30 (add_executable):
+  Cannot generate a safe runtime search path for target test_api because
+  files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+
+
+CMake Warning at cmake/Modules_CUDA_fix/upstream/FindCUDA.cmake:1839 (add_library):
+  Cannot generate a safe linker search path for target
+  caffe2_detectron_ops_gpu because files in some directories may conflict
+  with libraries in implicit directories:
+
+    link library [libgomp.so] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  modules/detectron/CMakeLists.txt:13 (CUDA_ADD_LIBRARY)
+
+
+CMake Warning at cmake/Modules_CUDA_fix/upstream/FindCUDA.cmake:1839 (add_library):
+  Cannot generate a safe runtime search path for target
+  caffe2_detectron_ops_gpu because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /share/apps/gcc/6.3.0/lib64 may be hidden by files in:
+      /scratch/pm2758/anaconda3/envs/sst/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  modules/detectron/CMakeLists.txt:13 (CUDA_ADD_LIBRARY)
+
+
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    THD_SO_VERSION
+
+
+Traceback (most recent call last):
+  File "setup.py", line 725, in <module>
+    build_deps()
+  File "setup.py", line 285, in build_deps
+    build_dir='build')
+  File "/scratch/pm2758/pytorch/tools/build_pytorch_libs.py", line 278, in build_caffe2
+    check_call(ninja_cmd, cwd=build_dir, env=my_env)
+  File "/scratch/pm2758/anaconda3/envs/sst/lib/python2.7/subprocess.py", line 190, in check_call
+    raise CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command '['ninja', 'install']' returned non-zero exit status 1

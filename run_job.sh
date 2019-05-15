@@ -7,6 +7,8 @@
 #SBATCH --error=err.dist.%j
 #SBATCH --time=100:00:00
 
+#SBATCH --partition=knl
+#SBATCH -w, --nodelist=c99-[07-08]
 #SBATCH --nodes=2
 #SBATCH --cpus-per-task=2
 #SBATCH --ntasks-per-node=2
