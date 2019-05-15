@@ -30,7 +30,7 @@ def init_processes(rank, size, fn, backend='tcp'):
 
 
 if __name__ == "__main__":
-    init_processes(0, 0, run, backend='mpi')
+    init_processes(0, 0, run, backend='gloo')
     # size = 2
     # processes = []
     # for rank in range(size):
