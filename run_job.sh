@@ -8,8 +8,8 @@
 #SBATCH --time=100:00:00
 
 #SBATCH --nodes=2
-#SBATCH --cpus-per-task=2
-#SBATCH --ntasks-per-node=2
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:2
 
 echo "Job started"
