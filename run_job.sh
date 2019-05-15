@@ -31,7 +31,7 @@ module load ninja/intel/1.8.2
 # mpirun -n 4 python mpi_dist_trial.py
 # mpirun -n 2 python mpitrial.py
 
-python mp_dist_synch.py 2
-# python mp_dist_asynch.py 2
+# python mp_dist_synch.py 2
+python mp_dist_asynch.py 2
 
 echo "Job completed"

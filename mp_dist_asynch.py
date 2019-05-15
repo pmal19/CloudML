@@ -214,7 +214,7 @@ def runServer(model, optimizer, epochs):
 		# print('server epoch end ',epoch)
 
 
-def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):
+def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim, device_id, device):
 	workers = list(range(1, dist.get_world_size()))
 	workers_handle = dist.new_group(workers)
 	torch.manual_seed(1234)
@@ -232,7 +232,8 @@ def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz,
 				break
 			s1 = s1.transpose(0,1).contiguous().view(-1,inp_dim,batch).transpose(1,2)
 			if(use_cuda):
-				s1, target = Variable(s1.cuda()), Variable(target.cuda())
+				s1, target = Variable(s1.to(device)), Variable(target.to(device))
+				# s1, target = Variable(s1.cuda()), Variable(target.cuda())
 			else:
 				s1, target = Variable(s1), Variable(target)
 
@@ -257,7 +258,8 @@ def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz,
 						break
 					sd = sd.transpose(0,1).contiguous().view(-1,inp_dim,devbatchSize).transpose(1,2)
 					if(use_cuda):
-						sd, dev_target = Variable(sd.cuda()), Variable(dev_target.cuda())
+						sd, dev_target = Variable(sd.to(device)), Variable(dev_target.to(device))
+						# sd, dev_target = Variable(sd.cuda()), Variable(dev_target.cuda())
 					else:
 						sd, dev_target = Variable(sd), Variable(dev_target)
 					dev_output = model(sd)
@@ -276,7 +278,28 @@ def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz,
 		# get_updated_model(model)
 		get_updated_model(model, workers_handle)
 		dist.barrier(workers_handle)
+		dev_loss = 0
+		n_correct = 0
+		n_total = 0
+		for idx, (dev_data, dev_target) in enumerate(devLoader):
+			sd = dev_data.float()
+			devbatchSize, _ = sd.shape
+			if batchSize != devbatchSize:
+				break
+			sd = sd.transpose(0,1).contiguous().view(-1,inp_dim,devbatchSize).transpose(1,2)
+			if(use_cuda):
+				sd, dev_target = Variable(sd.to(device)), Variable(dev_target.to(device))
+				# sd, dev_target = Variable(sd.cuda(device_id)), Variable(dev_target.cuda(device_id))
+			else:
+				sd, dev_target = Variable(sd), Variable(dev_target)
+			dev_output = model(sd)
+			dev_loss += criterion(dev_output, dev_target)
+			n_correct += (torch.max(dev_output, 1)[1].view(dev_target.size()) == dev_target).sum()
+			n_total += devbatchSize
+		dev_acc = (100. * n_correct.data)/n_total
+		print('Rank {}: Epoch: {} \tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(rank, epoch, dev_loss.data, dev_acc))
 		# print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
+
 	end_time = time.monotonic()
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
@@ -293,17 +316,21 @@ def main(rank, wsize):
 	learningRate = 0.01
 	momentum = 0.9
 	numWorkers = 1
-	use_cuda = torch.cuda.is_available()
+	use_cuda = torch.cuda.is_available() and torch.cuda.device_count() >= wsize
+	device_id = rank
+	device = None
 
 	model = BiLSTMSentiment(100, 100, 100, 5, use_cuda, batchSize) 
 	criterion = nn.CrossEntropyLoss()
-	if(use_cuda):
-		model.cuda()
-	if(use_cuda):
-		criterion = nn.CrossEntropyLoss().cuda()
-	else:
-		criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(model.parameters(), lr = learningRate, momentum = momentum)
+	
+	if(use_cuda):
+		device = torch.device("cuda:{}".format(device_id))
+		model = model.to(device)
+		# model.cuda(device_id)
+		# criterion = nn.CrossEntropyLoss().cuda(device_id)
+		# optimizer = optim.SGD(model.parameters(), lr = learningRate, momentum = momentum).cuda(device_id)
+		print("Using CUDA device id {} : {}".format(device_id, device))
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
 	trainData = "../Data/SST/trees/train.txt"
@@ -320,21 +347,22 @@ def main(rank, wsize):
 	if rank == 0:
 		runServer(model, optimizer, epochs)
 	else:
-		weighted_loss, numberOfSamples, average_time = runWorker(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
+		weighted_loss, numberOfSamples, average_time = runWorker(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100, device_id, device)
 		if rank == 1:
 			print('Rank {} Loss - {}, Avg Time - {}'.format(rank, (weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size() - 1)[0]))
 
 
 
-def setup(rank, world_size):
+def setup(rank, world_size, hostname):
 	os.environ['MASTER_ADDR'] = 'localhost'
 	os.environ['MASTER_PORT'] = '12355'
-	os.environ['WORLD_SIZE'] = world_size
-	# os.environ['RANK'] = rank // perform OS call hostname and rank to check
+	os.environ['WORLD_SIZE'] = str(world_size)
+	os.environ['RANK'] = str(rank)
 	# initialize the process group
 	dist.init_process_group(backend='gloo', rank=rank, world_size=world_size) # or 'nccl'
 	# Explicitly setting seed to make sure that models created in two processes
 	# start from same random weights and biases.
+	print("I am {} of {} in {}".format(rank, world_size, hostname))
 	torch.manual_seed(42)
 	
 	
@@ -343,9 +371,9 @@ def cleanup():
 
 
 def setupAndCall(rank, world_size):
-	setup(rank, world_size)
-	print("MP Rank - {}".format(rank))
 	hostname = socket.gethostname()
+	setup(rank, world_size, hostname)
+	print("MP Rank - {}".format(rank))
 	# runDistCollectives(rank, world_size, hostname)
 	main(rank, world_size)
 	cleanup()
@@ -372,6 +400,6 @@ def spawnProcesses(fn, world_size):
 	
 
 if __name__ == "__main__":
-	world_size = sys.argv[1]
-	print("World Size : {}", world_size)
+	world_size = int(sys.argv[1])
+	print("World Size : {}".format(world_size))
 	spawnProcesses(setupAndCall, world_size)

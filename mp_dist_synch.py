@@ -209,6 +209,27 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 
 			print('Rank {}: Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
 		print('Rank {}, epoch {} avg loss : {}'.format(dist.get_rank(), epoch, epoch_loss/num_batches))
+		dev_loss = 0
+		n_correct = 0
+		n_total = 0
+		for idx, (dev_data, dev_target) in enumerate(devLoader):
+			sd = dev_data.float()
+			devbatchSize, _ = sd.shape
+			if batchSize != devbatchSize:
+				break
+			sd = sd.transpose(0,1).contiguous().view(-1,inp_dim,devbatchSize).transpose(1,2)
+			if(use_cuda):
+				sd, dev_target = Variable(sd.to(device)), Variable(dev_target.to(device))
+				# sd, dev_target = Variable(sd.cuda(device_id)), Variable(dev_target.cuda(device_id))
+			else:
+				sd, dev_target = Variable(sd), Variable(dev_target)
+			dev_output = model(sd)
+			dev_loss += criterion(dev_output, dev_target)
+			n_correct += (torch.max(dev_output, 1)[1].view(dev_target.size()) == dev_target).sum()
+			n_total += devbatchSize
+		dev_acc = (100. * n_correct.data)/n_total
+		print('Rank {}: Epoch: {} \tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(rank, epoch, dev_loss.data, dev_acc))
+
 	end_time = time.monotonic()
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
@@ -258,7 +279,6 @@ def main(rank, wsize):
 	if rank == 0:
 		print("Rank 0 exiting")
 		print('Rank 0 Loss - {}, Avg Time - {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
-		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
 
