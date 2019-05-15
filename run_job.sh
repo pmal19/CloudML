@@ -7,11 +7,11 @@
 #SBATCH --error=err.dist.%j
 #SBATCH --time=100:00:00
 
-#SBATCH --partition=knl
-#SBATCH -w, --nodelist=c99-[07-08]
+##SBATCH --partition=knl
+##SBATCH -w, --nodelist=c99-[07-08]
 #SBATCH --nodes=2
 #SBATCH --cpus-per-task=1
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=2
 ##SBATCH --gres=gpu:2
 
 echo "Job started"
