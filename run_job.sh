@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #SBATCH --verbose
-#SBATCH --job-name=dist
+#SBATCH --job-name=2asynch
 #SBATCH --mem=100GB
-#SBATCH --output=out.dist.%j
-#SBATCH --error=err.dist.%j
+#SBATCH --output=out.asynch.2.dist.%j
+#SBATCH --error=err.asynch.2.dist.%j
 #SBATCH --time=100:00:00
 
 ##SBATCH --partition=knl
