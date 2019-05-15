@@ -372,4 +372,6 @@ def spawnProcesses(fn, world_size):
 	
 
 if __name__ == "__main__":
-	spawnProcesses(setupAndCall, 4)
+	world_size = sys.argv[1]
+	print("World Size : {}", world_size)
+	spawnProcesses(setupAndCall, world_size)

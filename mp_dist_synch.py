@@ -309,4 +309,6 @@ def run_demo(demo_fn, world_size):
 	
 
 if __name__ == "__main__":
-	run_demo(setupAndCall, 4)
+	world_size = sys.argv[1]
+	print("World Size : {}", world_size)
+	run_demo(setupAndCall, world_size)
