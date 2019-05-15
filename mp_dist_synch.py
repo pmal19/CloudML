@@ -143,7 +143,7 @@ def average_gradients(model):
 		param.grad.data /= size
   
 
-def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):    
+def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim, device_id, device):
 	torch.manual_seed(1234)
 	epoch_loss = 0.0
 	numberOfSamples = 0
@@ -159,7 +159,8 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 				break
 			s1 = s1.transpose(0,1).contiguous().view(-1,inp_dim,batch).transpose(1,2)
 			if(use_cuda):
-				s1, target = Variable(s1.cuda()), Variable(target.cuda())
+				s1, target = Variable(s1.to(device)), Variable(target.to(device))
+				# s1, target = Variable(s1.cuda(device_id)), Variable(target.cuda(device_id))
 			else:
 				s1, target = Variable(s1), Variable(target)
 
@@ -184,7 +185,8 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 						break
 					sd = sd.transpose(0,1).contiguous().view(-1,inp_dim,devbatchSize).transpose(1,2)
 					if(use_cuda):
-						sd, dev_target = Variable(sd.cuda()), Variable(dev_target.cuda())
+						sd, dev_target = Variable(sd.to(device)), Variable(dev_target.to(device))
+						# sd, dev_target = Variable(sd.cuda(device_id)), Variable(dev_target.cuda(device_id))
 					else:
 						sd, dev_target = Variable(sd), Variable(dev_target)
 					dev_output = model(sd)
@@ -223,17 +225,21 @@ def main(rank, wsize):
 	learningRate = 0.01
 	momentum = 0.9
 	numWorkers = 1
-	use_cuda = torch.cuda.is_available()
+	use_cuda = torch.cuda.is_available() and torch.cuda.device_count() >= wsize
+	device_id = rank
+	device = None
 
 	model = BiLSTMSentiment(100, 100, 100, 5, use_cuda, batchSize) 
 	criterion = nn.CrossEntropyLoss()
-	if(use_cuda):
-		model.cuda()
-	if(use_cuda):
-		criterion = nn.CrossEntropyLoss().cuda()
-	else:
-		criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(model.parameters(), lr = learningRate, momentum = momentum)
+	
+	if(use_cuda):
+		device = torch.device("cuda:{}".format(device_id))
+		model = model.to(device)
+		# model.cuda(device_id)
+		# criterion = nn.CrossEntropyLoss().cuda(device_id)
+		# optimizer = optim.SGD(model.parameters(), lr = learningRate, momentum = momentum).cuda(device_id)
+		print("Using CUDA device id {} : {}".format(device_id, device))
 
 	glovePath = "../Data/glove.6B/glove.6B.100d.txt"
 	trainData = "../Data/SST/trees/train.txt"
@@ -247,7 +253,7 @@ def main(rank, wsize):
 	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 	print('Rank {} - Data loaded of len {}'.format(rank, len(trainLoader)))
 
-	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
+	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100, device_id, device)
 
 	if rank == 0:
 		print("Rank 0 exiting")
@@ -256,15 +262,16 @@ def main(rank, wsize):
 
 
 
-def setup(rank, world_size):
+def setup(rank, world_size, hostname):
 	os.environ['MASTER_ADDR'] = 'localhost'
 	os.environ['MASTER_PORT'] = '12355'
 	os.environ['WORLD_SIZE'] = world_size
-	# os.environ['RANK'] = rank // perform OS call hostname and rank to check
+	os.environ['RANK'] = rank
 	# initialize the process group
 	dist.init_process_group(backend='gloo', rank=rank, world_size=world_size) # or 'nccl'
 	# Explicitly setting seed to make sure that models created in two processes
 	# start from same random weights and biases.
+	print("I am {} of {} in {}".format(rank, world_size, hostname))
 	torch.manual_seed(42)
 	
 	
@@ -273,9 +280,9 @@ def cleanup():
 
 
 def setupAndCall(rank, world_size):
-	setup(rank, world_size)
-	print("MP Rank - {}".format(rank))
 	hostname = socket.gethostname()
+	setup(rank, world_size, hostname)
+	print("MP Rank - {}".format(rank))
 	# runDistCollectives(rank, world_size, hostname)
 	main(rank, world_size)
 	cleanup()
