@@ -1,59 +1,38 @@
-import time
-import sys
-import os
 import re
+import os
+import sys
+import pdb
+import time
+import math
+import socket
+import random
+import tempfile
+import numpy as np
+import pandas as pd
+from PIL import Image
+from itertools import *
+
 import torch
 import torchvision
-import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from PIL import Image
-import torch.distributed as dist
 from torchvision import datasets, transforms
 from torch.autograd import Variable
-import numpy as np
 from torch.utils.data import Dataset, DataLoader
 import torch.backends.cudnn as cudnn
 from torchvision import transforms, utils
-from itertools import *
+
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from torch.multiprocessing import Process
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from dataparser import *
 from batcher import *
 from readEmbeddings import *
 from datasets import *
 from models import *
-
-import pdb
-
-class ClassLSTM(nn.Module):
-	"""docstring for ClassLSTM"""
-	def __init__(self, input_size, hidden_size, num_layers, batch, bias = True, batch_first = False, dropout = 0, bidirectional = False):
-		super(ClassLSTM, self).__init__()
-		self.num_directions = 2 if bidirectional else 1
-		self.lstm = nn.LSTM(input_size, hidden_size, num_layers, bias = True, batch_first = False, dropout = dropout, bidirectional = False)
-		self.h0 = Variable(torch.randn(num_layers * self.num_directions, batch, hidden_size))
-		self.c0 = Variable(torch.randn(num_layers * self.num_directions, batch, hidden_size))
-	def forward(self, s1):
-		output, hn = self.lstm(s1, (self.h0, self.c0))
-		return output
-
-class sstNet(nn.Module):
-	"""docstring for sstNet"""
-	def __init__(self, inp_dim, model_dim, num_layers, reverse, bidirectional, dropout, mlp_input_dim, mlp_dim, num_classes, num_mlp_layers, mlp_ln, classifier_dropout_rate, training, batchSize):
-		super(sstNet, self).__init__()
-		self.encoderSst = ClassLSTM(inp_dim, model_dim, num_layers, batchSize, bidirectional = bidirectional, dropout = dropout)
-		self.classifierSst = MLP(mlp_input_dim, mlp_dim, num_classes, num_mlp_layers, mlp_ln, classifier_dropout_rate, training)
-
-	def forward(self, s1):
-		oE = self.encoderSst(s1)
-		features = oE[-1]
-		output = F.log_softmax(self.classifierSst(features))
-		return output
-
-	def encode(self, s):
-		emb = self.encoderSst(s)
-		return emb
 
 
 class BiLSTMSentiment(nn.Module):
@@ -99,7 +78,7 @@ class sstDataset(Dataset):
 
 	def maxlength(self, data):
 		maxSentenceLength = max([len(d['sentence_1'].split()) for d in data])
-		print("Max sentence length - ", maxSentenceLength)
+		# print("Max sentence length - ", maxSentenceLength)
 		return maxSentenceLength
 
 	def pad(self, sentence):
@@ -132,11 +111,10 @@ class DataPartitioner(Dataset):
 	def __init__(self, data, sizes, seed=1234):
 		self.data = data
 		self.partitions = []
-		rng = Random()
-		rng.seed(seed)
+		random.seed(seed)
 		data_len = len(data)
 		indexes = [x for x in range(0, data_len)]
-		rng.shuffle(indexes)
+		random.shuffle(indexes)
 
 		for frac in sizes:
 			part_len = int(frac * data_len)
@@ -154,22 +132,22 @@ def partition_dataset(sstPath, glovePath, batchSize, transformations=None):
 	partition_sizes = [1.0 / size for _ in range(size)]
 	partition = DataPartitioner(dataset, partition_sizes)
 	partition = partition.use(dist.get_rank())
-	train_set = DataLoader(partition, batch_size=bsz, shuffle=True, num_workers=1)
-	return train_set, bsz
+	data_set = DataLoader(partition, batch_size=bsz, shuffle=True, num_workers=1)
+	return data_set, bsz
 
 
 def average_gradients(model):
 	size = float(dist.get_world_size())
 	for param in model.parameters():
-		dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+		dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
 		param.grad.data /= size
+  
 
-
-def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda):    
+def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):    
 	torch.manual_seed(1234)
 	epoch_loss = 0.0
 	numberOfSamples = 0
-	num_batches = ceil(len(trainLoader.dataset) / float(bsz))
+	num_batches = math.ceil(len(trainLoader.dataset) / float(bsz))
 	start_time = time.monotonic()
 	for epoch in range(epochs):
 		epoch_loss = 0.0
@@ -195,7 +173,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 			average_gradients(model)
 			optimizer.step()
 
-			if batch_idx % 1000 == 0:
+			if batch_idx % 100 == 0:
 				dev_loss = 0
 				n_correct = 0
 				n_total = 0
@@ -213,9 +191,9 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 					dev_loss += criterion(dev_output, dev_target)
 					n_correct += (torch.max(dev_output, 1)[1].view(dev_target.size()) == dev_target).sum()
 					n_total += devbatchSize
-				dev_acc = (100. * n_correct.data[0])/n_total
+				dev_acc = (100. * n_correct.data)/n_total
 
-				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data[0], dev_loss.data[0], dev_acc))
+				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
 
 			# numberOfSamples += data.size()[0]
 			# data, target = Variable(data), Variable(target)
@@ -233,10 +211,11 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
 	numberOfSamples = torch.Tensor([numberOfSamples])
-	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM, group=0)
-	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM, group=0)
-	dist.all_reduce(average_time, op=dist.reduce_op.SUM, group=0)
+	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM)
+	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM)
+	dist.all_reduce(average_time, op=dist.reduce_op.SUM)
 	return weighted_loss, numberOfSamples, average_time
+
 
 def main(rank, wsize):
 	batchSize = 16
@@ -266,27 +245,60 @@ def main(rank, wsize):
 	trainLoader, bszTrain = partition_dataset(trainData, glovePath, batchSize)
 	devLoader, bszDev = partition_dataset(devData, glovePath, batchSize)
 	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
-	print('Rank {} - Data loaded'.format(rank))
+	print('Rank {} - Data loaded of len {}'.format(rank, len(trainLoader)))
 
-	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda)
+	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
 
 	if rank == 0:
+		print("rank 0 exiting")
 		print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
 		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
 
+def setup(rank, world_size):
+	os.environ['MASTER_ADDR'] = 'localhost'
+	os.environ['MASTER_PORT'] = '12355'
+	# initialize the process group
+	dist.init_process_group(backend='gloo', rank=rank, world_size=world_size) # or 'nccl'
+	# Explicitly setting seed to make sure that models created in two processes
+	# start from same random weights and biases.
+	torch.manual_seed(42)
+	
+	
+def cleanup():
+	dist.destroy_process_group()
+
+
+def setupAndCall(rank, world_size):
+	setup(rank, world_size)
+	print("mp rank - ", rank)
+	hostname = socket.gethostname()
+	# runDistCollectives(rank, world_size, hostname)
+	main(rank, world_size)
+	cleanup()
+	
+	
+def runDistCollectives(rank, world_size, hostname):
+	print("I am {} of {} in {}".format(rank, world_size, hostname))
+	tensor = torch.zeros(1)
+	if rank == 0:
+		tensor += 1
+		# Send the tensor to process 1
+		dist.send(tensor=tensor, dst=1)
+	else:
+		# Receive tensor from process 0
+		dist.recv(tensor=tensor, src=0)
+	print('Rank ', rank, ' has data ', tensor[0])
+	
+	
+def run_demo(demo_fn, world_size):
+	mp.spawn(demo_fn,
+			 args=(world_size,),
+			 nprocs=world_size,
+			 join=True)
+	
 
 if __name__ == "__main__":
-	
-	#if len(sys.argv) != 2:
-	#    print("ERROR")
-	#    sys.exit(1)
-	
-	dist.init_process_group(backend="mpi")#, world_size=int(sys.argv[1]))
-	# dist.init_process_group(backend="tcp")#, world_size=int(sys.argv[1]))
-	rank = dist.get_rank()
-	wsize = dist.get_world_size()
-	print("rank ",rank, " wsize ", wsize)
-
-	# main(rank, wsize)
+    init_processes(0, 0, run, backend='gloo')
+	run_demo(setupAndCall, 4)
