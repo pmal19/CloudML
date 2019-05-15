@@ -143,15 +143,88 @@ def average_gradients(model):
 		param.grad.data /= size
   
 
-def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):    
+
+def send_gradients_to_server_and_update_model(model):
+	# Sending gradients to server
+	tag = 0
+	dist.send(tensor=torch.Tensor([tag]), dst=0)
+	for param in model.parameters():
+		dist.send(tensor=param.grad.data, dst=0)
+	# Recieving data from server
+	for param in model.parameters():
+		dist.recv(tensor=param.data, src=0)
+
+
+def get_updated_model(model, workers_handle):
+	# rank_worker_finished = torch.zeros(dist.get_world_size() - 1)
+	# rank_worker_finished[rank - 1] = 1
+	tag = 1
+	dist.send(tensor=torch.Tensor([tag]), dst=0)
+	# dist.send(tensor=rank_worker_finished, dst=0)
+	# print('Rank {} epoch end waiting on params barrier'.format(dist.get_rank()))
+	# dist.barrier(workers_handle)
+	for name, param in model.named_parameters():
+		# print('Recv Rank ',dist.get_rank(),' name - ',name)
+		dist.recv(tensor=param.data, src=0)
+
+
+def send_updated_model_epoch_end(model):
+	for dst in range(1, dist.get_world_size()):
+		# print('Rank {} Sending epoch end'.format(dst))
+		for name, param in model.named_parameters():
+			# print('Send Rank ',dist.get_rank(),' name - ',name)
+			dist.send(tensor=param.data, dst=dst)
+
+
+def send_updated_model(model, dst):
+	for param in model.parameters():
+		dist.send(tensor=param.data, dst=dst)
+
+
+
+def runServer(model, optimizer, epochs):
+	model.zero_grad()
+	for param in model.parameters(): #???
+		param.sum().backward()
+	workers = list(range(1, dist.get_world_size()))
+	workers_handle = dist.new_group(workers)
+	tag = 0
+	tag = torch.Tensor([tag])
+	for epoch in range(epochs):
+		# print('server epoch start ',epoch)
+		workers_finished = [False]*(dist.get_world_size() - 1)
+		while not reduce((lambda x, y: x and y), workers_finished):
+			src = dist.recv(tensor=tag)
+			if tag == 0:
+				model.zero_grad()
+				optimizer.zero_grad()
+				for param in model.parameters():
+					dist.recv(tensor=param.grad.data, src=src)
+				optimizer.step()
+				send_updated_model(model, src)
+			elif tag == 1:
+				workers_finished[src - 1] = True
+			# print(workers_finished, reduce((lambda x, y: x and y),workers_finished))
+		# print(workers_finished, workers_finished.sum(), dist.get_world_size() - 1)
+		# print(workers_finished, dist.get_world_size() - 1)
+		for dst in workers:
+			send_updated_model(model, dst)
+		# send_updated_model_epoch_end(model)
+		# dist.barrier(workers_handle)
+		# print('server epoch end ',epoch)
+
+
+def runWorker(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLoader, use_cuda, batchSize, devbatchSize, inp_dim):
+	workers = list(range(1, dist.get_world_size()))
+	workers_handle = dist.new_group(workers)
 	torch.manual_seed(1234)
-	epoch_loss = 0.0
-	numberOfSamples = 0
 	num_batches = math.ceil(len(trainLoader.dataset) / float(bsz))
+	numberOfSamples = 0
 	start_time = time.monotonic()
 	for epoch in range(epochs):
 		epoch_loss = 0.0
 		numberOfSamples = 0
+		# print('worker rank ',rank,' epoch start ',epoch)
 		for batch_idx, (data, target) in enumerate(trainLoader):
 			s1 = data.float()
 			batch, _ = s1.shape
@@ -170,8 +243,8 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 			loss = criterion(output, target)
 			epoch_loss += loss.item()
 			loss.backward()
-			average_gradients(model)
-			optimizer.step()
+
+			send_gradients_to_server_and_update_model(model)
 
 			if batch_idx % 100 == 0:
 				dev_loss = 0
@@ -193,27 +266,24 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 					n_total += devbatchSize
 				dev_acc = (100. * n_correct.data)/n_total
 
-				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
-
-			# numberOfSamples += data.size()[0]
-			# data, target = Variable(data), Variable(target)
-			# optimizer.zero_grad()
-			# output = model(data)
-			# loss = criterion(output, target)
-			# epoch_loss += loss.item()
-			# loss.backward()
-			# average_gradients(model)
-			# optimizer.step()
-
-			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
-		print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
+				print('Rank {}: Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
+			
+			print('Rank {}: Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
+		print('Rank {}, epoch {} avg loss : {}'.format(dist.get_rank(), epoch, epoch_loss/num_batches))
+		#     print('Rank - {} - Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(loader.dataset), 100. * batch_idx / len(loader), loss.item()))
+		# print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
+		# dist.barrier(workers)
+		# get_updated_model(model)
+		get_updated_model(model, workers_handle)
+		dist.barrier(workers_handle)
+		# print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
 	end_time = time.monotonic()
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
 	numberOfSamples = torch.Tensor([numberOfSamples])
-	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM)
-	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM)
-	dist.all_reduce(average_time, op=dist.reduce_op.SUM)
+	dist.all_reduce(weighted_loss, op=dist.reduce_op.SUM, group=workers_handle)
+	dist.all_reduce(numberOfSamples, op=dist.reduce_op.SUM, group=workers_handle)
+	dist.all_reduce(average_time, op=dist.reduce_op.SUM, group=workers_handle)
 	return weighted_loss, numberOfSamples, average_time
 
 
@@ -247,18 +317,20 @@ def main(rank, wsize):
 	# testLoader, bszTest = partition_dataset(testData, glovePath, batchSize)
 	print('Rank {} - Data loaded of len {}'.format(rank, len(trainLoader)))
 
-	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
-
 	if rank == 0:
-		print("rank 0 exiting")
-		print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
-		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
+		runServer(model, optimizer, epochs)
+	else:
+		weighted_loss, numberOfSamples, average_time = runWorker(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
+		if rank == 1:
+			print('Rank {} Loss - {}, Avg Time - {}'.format(rank, (weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size() - 1)[0]))
 
 
 
 def setup(rank, world_size):
 	os.environ['MASTER_ADDR'] = 'localhost'
 	os.environ['MASTER_PORT'] = '12355'
+	os.environ['WORLD_SIZE'] = world_size
+	# os.environ['RANK'] = rank // perform OS call hostname and rank to check
 	# initialize the process group
 	dist.init_process_group(backend='gloo', rank=rank, world_size=world_size) # or 'nccl'
 	# Explicitly setting seed to make sure that models created in two processes
@@ -272,7 +344,7 @@ def cleanup():
 
 def setupAndCall(rank, world_size):
 	setup(rank, world_size)
-	print("mp rank - ", rank)
+	print("MP Rank - {}".format(rank))
 	hostname = socket.gethostname()
 	# runDistCollectives(rank, world_size, hostname)
 	main(rank, world_size)
@@ -289,15 +361,15 @@ def runDistCollectives(rank, world_size, hostname):
 	else:
 		# Receive tensor from process 0
 		dist.recv(tensor=tensor, src=0)
-	print('Rank ', rank, ' has data ', tensor[0])
+	print('Rank {} has data {}'.format(rank, tensor[0]))
 	
 	
-def run_demo(demo_fn, world_size):
-	mp.spawn(demo_fn,
+def spawnProcesses(fn, world_size):
+	mp.spawn(fn,
 			 args=(world_size,),
 			 nprocs=world_size,
 			 join=True)
 	
 
 if __name__ == "__main__":
-	run_demo(setupAndCall, 4)
+	spawnProcesses(setupAndCall, 4)

@@ -193,7 +193,7 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 					n_total += devbatchSize
 				dev_acc = (100. * n_correct.data)/n_total
 
-				print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
+				print('Rank {}: Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
 
 			# numberOfSamples += data.size()[0]
 			# data, target = Variable(data), Variable(target)
@@ -205,8 +205,8 @@ def run(rank, size, model, optimizer, criterion, epochs, trainLoader, bsz, devLo
 			# average_gradients(model)
 			# optimizer.step()
 
-			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
-		print('Rank ', dist.get_rank(), ', epoch ', epoch, ': ', epoch_loss / num_batches)
+			print('Rank {}: Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(rank, epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
+		print('Rank {}, epoch {} avg loss : {}'.format(dist.get_rank(), epoch, epoch_loss/num_batches))
 	end_time = time.monotonic()
 	average_time = torch.Tensor([(end_time - start_time)/epochs])
 	weighted_loss = torch.Tensor([(epoch_loss/num_batches) * numberOfSamples])
@@ -250,8 +250,8 @@ def main(rank, wsize):
 	weighted_loss, numberOfSamples, average_time = run(rank, wsize, model, optimizer, criterion, epochs, trainLoader, bszTrain, devLoader, use_cuda, batchSize, batchSize, 100)
 
 	if rank == 0:
-		print("rank 0 exiting")
-		print('{}, {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
+		print("Rank 0 exiting")
+		print('Rank 0 Loss - {}, Avg Time - {}'.format((weighted_loss/numberOfSamples)[0], (average_time/dist.get_world_size())[0]))
 		print("Final Weighted Loss - ",(weighted_loss/numberOfSamples))
 
 
@@ -259,6 +259,8 @@ def main(rank, wsize):
 def setup(rank, world_size):
 	os.environ['MASTER_ADDR'] = 'localhost'
 	os.environ['MASTER_PORT'] = '12355'
+	os.environ['WORLD_SIZE'] = world_size
+	# os.environ['RANK'] = rank // perform OS call hostname and rank to check
 	# initialize the process group
 	dist.init_process_group(backend='gloo', rank=rank, world_size=world_size) # or 'nccl'
 	# Explicitly setting seed to make sure that models created in two processes
@@ -272,7 +274,7 @@ def cleanup():
 
 def setupAndCall(rank, world_size):
 	setup(rank, world_size)
-	print("mp rank - ", rank)
+	print("MP Rank - {}".format(rank))
 	hostname = socket.gethostname()
 	# runDistCollectives(rank, world_size, hostname)
 	main(rank, world_size)
@@ -289,7 +291,7 @@ def runDistCollectives(rank, world_size, hostname):
 	else:
 		# Receive tensor from process 0
 		dist.recv(tensor=tensor, src=0)
-	print('Rank ', rank, ' has data ', tensor[0])
+	print('Rank {} has data {}'.format(rank, tensor[0]))
 	
 	
 def run_demo(demo_fn, world_size):
@@ -300,11 +302,4 @@ def run_demo(demo_fn, world_size):
 	
 
 if __name__ == "__main__":
-    # init_processes(0, 0, run, backend='gloo')
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
-    dist.init_process_group(backend="gloo")
-    rank = dist.get_rank()
-    wsize = dist.get_world_size()
-    print("rank ", rank, " wsize ", wsize)
-	# run_demo(setupAndCall, 4)
+	run_demo(setupAndCall, 4)
