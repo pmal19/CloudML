@@ -25,8 +25,8 @@ module load nccl/cuda9.0/2.4.2
 module load ninja/intel/1.8.2
 
 # mpiexec -n 3 python dist_sst.py
-# mpirun -n 3 python dist_sst.py
+mpirun -n 4 python mpi_dist_trial.py
 
-python mp_dist_trial.py
+# python mp_dist_trial.py
 
 echo "Job completed"

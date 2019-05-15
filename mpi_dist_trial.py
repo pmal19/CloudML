@@ -300,5 +300,9 @@ def run_demo(demo_fn, world_size):
 	
 
 if __name__ == "__main__":
-    init_processes(0, 0, run, backend='gloo')
-	run_demo(setupAndCall, 4)
+    # init_processes(0, 0, run, backend='gloo')
+    dist.init_process_group(backend="gloo")
+    rank = dist.get_rank()
+    wsize = dist.get_world_size()
+    print("rank ", rank, " wsize ", wsize)
+	# run_demo(setupAndCall, 4)
