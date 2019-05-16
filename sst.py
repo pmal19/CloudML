@@ -132,10 +132,10 @@ def trainEpoch(epoch, break_val, trainLoader, model, optimizer, criterion, inp_d
 				dev_loss += criterion(dev_output, dev_target)
 				n_correct += (torch.max(dev_output, 1)[1].view(dev_target.size()) == dev_target).sum()
 				n_total += devbatchSize
-			dev_acc = (100. * n_correct.data[0])/n_total
+			dev_acc = (100. * n_correct.data)/n_total
 			print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tDev Loss: {:.6f}\tDev Acc: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.data, dev_loss.data, dev_acc))
 		print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data), len(trainLoader.dataset), 100. * batch_idx / len(trainLoader), loss.item()))
-	print('Epoch {} avg loss : {}'.format(epoch, epoch_loss/num_batches))
+	# print('Epoch {} avg loss : {}'.format(epoch, epoch_loss/num_batches))
 	return loss
 
 def train(numEpochs, trainLoader, model, optimizer, criterion, inp_dim, batchSize, use_cuda, devLoader, devbatchSize):
@@ -148,7 +148,7 @@ def train(numEpochs, trainLoader, model, optimizer, criterion, inp_dim, batchSiz
 				break
 			sd = sd.transpose(0,1).contiguous().view(-1,inp_dim,devbatchSize).transpose(1,2)
 			if(use_cuda):
-				sd, dev_target = Variable(sd.cuda(device_id)), Variable(dev_target.cuda(device_id))
+				sd, dev_target = Variable(sd.cuda()), Variable(dev_target.cuda())
 			else:
 				sd, dev_target = Variable(sd), Variable(dev_target)
 			dev_output = model(sd)
@@ -167,7 +167,7 @@ learningRate = 0.0001
 momentum = 0.9
 numWorkers = 0
 
-numEpochs = 1
+numEpochs = 10
 
 inp_dim = 100
 model_dim = 100
