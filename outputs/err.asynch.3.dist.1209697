@@ -1,0 +1,8 @@
+/scratch/pm2758/distTraining/Code/mp_dist_asynch.py:59: UserWarning: Implicit dimension choice for log_softmax has been deprecated. Change the call to include dim=X as an argument.
+  log_probs = F.log_softmax(y)
+/scratch/pm2758/distTraining/Code/mp_dist_asynch.py:59: UserWarning: Implicit dimension choice for log_softmax has been deprecated. Change the call to include dim=X as an argument.
+  log_probs = F.log_softmax(y)
+/scratch/pm2758/anaconda3/envs/pytorch_v1/lib/python3.7/site-packages/torch/distributed/distributed_c10d.py:100: UserWarning: torch.distributed.reduce_op is deprecated, please use torch.distributed.ReduceOp instead
+  warnings.warn("torch.distributed.reduce_op is deprecated, please use "
+/scratch/pm2758/anaconda3/envs/pytorch_v1/lib/python3.7/site-packages/torch/distributed/distributed_c10d.py:100: UserWarning: torch.distributed.reduce_op is deprecated, please use torch.distributed.ReduceOp instead
+  warnings.warn("torch.distributed.reduce_op is deprecated, please use "
