@@ -141,6 +141,9 @@ def trainEpoch(epoch, break_val, trainLoader, model, optimizer, criterion, inp_d
 def train(numEpochs, trainLoader, model, optimizer, criterion, inp_dim, batchSize, use_cuda, devLoader, devbatchSize):
 	for epoch in range(numEpochs):
 		loss = trainEpoch(epoch,20000000,trainLoader,model,optimizer,criterion,inp_dim,batchSize, use_cuda, devLoader, devbatchSize)
+		dev_loss = 0
+		n_correct = 0
+		n_total = 0
 		for idx, (dev_data, dev_target) in enumerate(devLoader):
 			sd = dev_data.float()
 			devbatchSize, _ = sd.shape
